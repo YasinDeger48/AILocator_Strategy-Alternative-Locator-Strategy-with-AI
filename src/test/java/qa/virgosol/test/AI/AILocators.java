@@ -9,6 +9,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import qa.virgosol.test.AI.helper.ElementModel;
+import qa.virgosol.test.AI.helper.ReadYAML;
+import qa.virgosol.test.AI.model.YAMLModel;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -27,19 +30,24 @@ public class AILocators {
     List<String> locators = new ArrayList<>();
     Map<String, List<String>> anchorElements = new HashMap<>();
 
+    ElementModel model = new ElementModel();
+
     List<WebElement> a;
 
     List<String> types = new ArrayList<>();
 
-    String locatorType = "li";
+
+    String locatorType = ReadYAML.getElementType();
 
 
     @Before
     public void setup(){
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless");
+        if(ReadYAML.getHeadlessStatus()){
+            options.addArguments("--headless");
+        }
         driver = new ChromeDriver(options);
-        driver.get("https://katalon-demo-cura.herokuapp.com/"); //ilk iki demo senaryo
+        driver.get(ReadYAML.getTestURL()); //ilk iki demo senaryo
         //driver.get("https://www.amazon.com/");
         //driver.get("https://virgosol.com/");
         driver.manage().window().maximize();
@@ -55,18 +63,24 @@ public class AILocators {
 
 
         for (int i = 0; i < a.size(); i++) {
+            model.setClassName(a.get(i).getAttribute("class"));
+            model.setId(a.get(i).getAttribute("id"));
+            model.setTextValue(a.get(i).getText());
+            model.setName(a.get(i).getAttribute("name"));
+            model.setStyle(a.get(i).getAttribute("style"));
+            model.setTitle(a.get(i).getAttribute("title"));
 
-                types = List.of(antinKuntinNullPointer(i,"class"),
-                        antinKuntinNullPointer(i,"id"),
-                        antinKuntinNullPointer(i, "innerText"),
-                        antinKuntinNullPointer(i,"name"),
-                        antinKuntinNullPointer(i,"style"),
-                        antinKuntinNullPointer(i,"title"));
-            anchorElements.put(""+i+"",types );
+            anchorElements.put(""+i+"",List.of(
+                    model.getClassName(),
+                    model.getId(),
+                    model.getTextValue(),
+                    model.getName(),
+                    model.getStyle(),
+                    model.getTitle()));
         }
 
- /*       for (Map.Entry<String, List<String>> stringListEntry : anchorElements.entrySet()) {
-            System.out.println("stringListEntry.getKey() + \" \"+ stringListEntry.getValue() = " + stringListEntry.getKey() + " " + stringListEntry.getValue());
+/*        for (Map.Entry<String, List<String>> stringListEntry : anchorElements.entrySet()) {
+            System.out.println("Class ve ID elementleri = " + stringListEntry.getKey() + " " + stringListEntry.getValue());
         }*/
 
         //String xpath = "//a[@class='btn btn-dark btn-lg toggle']";
@@ -74,34 +88,28 @@ public class AILocators {
         //String xpath = "//a[@id='to-top']";
         String xpath = "//a[@id='btn-make-appointment']"; //Deneme locatorumuz - 1
         //String xpath = "//a[@id='menu-toggle']"; //deneme locator - 2
-        //String xpath = "//a[text()='Sell']";
+        //String xpath = "//a[text()='Sell']"; //amazon
         //String xpath = "//li[@id='accordion-menu-item-2750']";
 
         showAlternativeLocators(anchorElements,xpath);
+        System.out.println("locators = " + locators);
         System.out.println("Test is starting\n------------------------------------------");
         System.out.println("Senin girdiğin locator: "+xpath);
-        denemeLocator2();
+        denemeLocator1();
 
     }
 
-    public void aVoidNullPointer(int i, String type){
-        try {
-            if(!a.get(i).getAttribute(type).equals("") || a.get(i).getAttribute(type) != null){
-                types.add(a.get(i).getAttribute(type));
-            }
-        }catch (NullPointerException e){
-            types.add("");
-        }
-    }
 
     @Name("Deneme locator 1 senaryosu cura.healthcare")
     public void denemeLocator1(){
+        System.out.println("Bu element için yakalanan locatorlar: " + locators.size() + "(Adet) = " + locators + "\n---------------------------------");
         for (int i = 0; i < locators.size(); i++) {
-            System.out.println("locators.get(i) = " + locators.get(i));
+           // System.out.println("locators.get(i) = " + locators.get(i));
             List<WebElement> elements = driver.findElements(By.xpath(locators.get(i)));
             if(elements.size()>1){
-                System.out.println("Birden fazla element bulundu");
+                System.out.println(locators.get(i)+ "Elementinden birden fazla var");
             }else{
+                System.out.println(locators.get(i) + " Elementi ile devam edildi");
                 elements.get(0).click();
                 try {
                     Thread.sleep(3000);
@@ -282,7 +290,6 @@ public class AILocators {
             throw new RuntimeException(e);
         }
     }
-
     @After
     public void teardown(){
         if(driver != null){

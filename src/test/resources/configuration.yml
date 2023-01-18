@@ -1,0 +1,7 @@
+
+  elementType : "a"
+  yourLocator : ""
+  yourLocatorType : "xpath"
+  browserType : "Chrome"
+  headless : true
+  testURL : "https://katalon-demo-cura.herokuapp.com/"
